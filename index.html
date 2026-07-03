@@ -1,13 +1,100 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>framelab-data-link-coding---arq-simulator</title>
+    <title>FrameLab: Data Link Coding & ARQ Simulator</title>
   </head>
   <body>
-    <div id="app"></div>
+    <div class="container">
+      <h1>FrameLab: Data Link Coding & ARQ Simulator</h1>
+
+      <section class="section">
+        <h2>1) Bit Stuffing / Destuffing</h2>
+
+        <div class="row">
+          <div>
+            <label for="bitInput">رشته باینری (حداکثر 100 بیت)</label>
+            <input id="bitInput" type="text" placeholder="مثال: 0111110111110" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="stuffBtn">اعمال Bit Stuffing</button>
+          <button id="verifyStuffBtn" class="secondary">بررسی صحت Destuffing</button>
+        </div>
+
+        <p id="bitError" class="error"></p>
+
+        <div class="result-box">
+          <div class="result-item">
+            <strong>رشته اصلی:</strong> <span id="bitOriginalOut">-</span>
+          </div>
+          <div class="result-item">
+            <strong>رشته Stuff شده:</strong> <span id="bitStuffedOut">-</span>
+          </div>
+          <div class="result-item">
+            <strong>رشته Destuff شده:</strong> <span id="bitDestuffedOut">-</span>
+          </div>
+          <div class="result-item">
+            <strong>وضعیت:</strong> <span id="bitStatus">-</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>2) CRC</h2>
+
+        <div class="row">
+          <div>
+            <label for="crcData">Data</label>
+            <input id="crcData" type="text" placeholder="مثلاً 1011001" />
+          </div>
+
+          <div>
+            <label for="crcGenerator">Generator</label>
+            <input id="crcGenerator" type="text" placeholder="مثلاً 1101" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div style="width: 100%;">
+            <label for="codewordInput">Codeword</label>
+            <input id="codewordInput" type="text" placeholder="Codeword اینجا نمایش داده یا ویرایش می‌شود" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="crcCalcBtn">محاسبه CRC</button>
+          <button id="injectBtn" class="secondary">تزریق خطای تصادفی</button>
+          <button id="crcCheckBtn" class="secondary">بررسی Codeword</button>
+        </div>
+
+        <p id="crcError" class="error"></p>
+
+        <div class="result-box">
+          <div class="result-item">
+            <strong>CRC:</strong> <span id="crcOut" class="result-value">---</span>
+          </div>
+
+          <div class="result-item">
+            <strong>وضعیت بررسی:</strong> <span id="crcCheckOut" class="result-value">---</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>3) Stop-and-Wait ARQ</h2>
+
+        <div class="actions">
+          <button id="arqStartBtn">شروع شبیه‌سازی</button>
+          <button id="arqClearBtn" class="secondary">پاک کردن لاگ</button>
+        </div>
+
+        <div id="arqLog" class="log-box"></div>
+      </section>
+    </div>
+
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

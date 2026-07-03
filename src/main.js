@@ -1,60 +1,184 @@
-import './style.css'
-import javascriptLogo from './assets/javascript.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import { setupCounter } from './counter.js'
+import './style.css';
 
-document.querySelector('#app').innerHTML = `
-<section id="center">
-  <div class="hero">
-    <img src="${heroImg}" class="base" width="170" height="179">
-    <img src="${javascriptLogo}" class="framework" alt="JavaScript logo"/>
-    <img src="${viteLogo}" class="vite" alt="Vite logo" />
-  </div>
-  <div>
-    <h1>Get started</h1>
-    <p>Edit <code>src/main.js</code> and save to test <code>HMR</code></p>
-  </div>
-  <button id="counter" type="button" class="counter"></button>
-</section>
+import {
+  validateBitString,
+  bitStuff,
+  bitDestuff,
+  verifyBitStuffing
+} from './modules/bitStuffing.js';
 
-<div class="ticks"></div>
+import {
+  validateCRCInput,
+  createCodeword,
+  checkCodeword,
+  corruptCodeword
+} from './modules/crc.js';
 
-<section id="next-steps">
-  <div id="docs">
-    <svg class="icon" role="presentation" aria-hidden="true"><use href="/icons.svg#documentation-icon"></use></svg>
-    <h2>Documentation</h2>
-    <p>Your questions, answered</p>
-    <ul>
-      <li>
-        <a href="https://vite.dev/" target="_blank">
-          <img class="logo" src="${viteLogo}" alt="" />
-          Explore Vite
-        </a>
-      </li>
-      <li>
-        <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank">
-          <img class="button-icon" src="${javascriptLogo}" alt="">
-          Learn more
-        </a>
-      </li>
-    </ul>
-  </div>
-  <div id="social">
-    <svg class="icon" role="presentation" aria-hidden="true"><use href="/icons.svg#social-icon"></use></svg>
-    <h2>Connect with us</h2>
-    <p>Join the Vite community</p>
-    <ul>
-      <li><a href="https://github.com/vitejs/vite" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#github-icon"></use></svg>GitHub</a></li>
-      <li><a href="https://chat.vite.dev/" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#discord-icon"></use></svg>Discord</a></li>
-      <li><a href="https://x.com/vite_js" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#x-icon"></use></svg>X.com</a></li>
-      <li><a href="https://bsky.app/profile/vite.dev" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#bluesky-icon"></use></svg>Bluesky</a></li>
-    </ul>
-  </div>
-</section>
+import { StopAndWaitSim } from './modules/stopAndWait.js';
 
-<div class="ticks"></div>
-<section id="spacer"></section>
-`
+function setupBitStuffing() {
+  const input = document.getElementById('bitInput');
+  const stuffBtn = document.getElementById('stuffBtn');
+  const verifyBtn = document.getElementById('verifyStuffBtn');
 
-setupCounter(document.querySelector('#counter'))
+  const originalOut = document.getElementById('bitOriginalOut');
+  const stuffedOut = document.getElementById('bitStuffedOut');
+  const destuffedOut = document.getElementById('bitDestuffedOut');
+  const bitStatus = document.getElementById('bitStatus');
+
+  const errorBox = document.getElementById('bitError');
+
+  stuffBtn.addEventListener('click', () => {
+    errorBox.textContent = '';
+    const value = input.value.trim();
+
+    const validation = validateBitString(value, 100);
+    if (!validation.valid) {
+      errorBox.textContent = validation.error;
+      return;
+    }
+
+    const stuffed = bitStuff(value);
+    const destuffed = bitDestuff(stuffed);
+
+    originalOut.textContent = value;
+    stuffedOut.textContent = stuffed;
+    destuffedOut.textContent = destuffed;
+    bitStatus.textContent = destuffed === value ? 'صحت بازیابی: درست' : 'صحت بازیابی: نادرست';
+  });
+
+  verifyBtn.addEventListener('click', () => {
+    errorBox.textContent = '';
+    const original = input.value.trim();
+    const stuffed = stuffedOut.textContent.trim();
+
+    if (!original) {
+      errorBox.textContent = 'ابتدا رشته اصلی را وارد و Stuffing را انجام دهید.';
+      return;
+    }
+
+    if (!stuffed || stuffed === '-') {
+      errorBox.textContent = 'ابتدا عملیات Stuffing را انجام دهید.';
+      return;
+    }
+
+    const result = verifyBitStuffing(original, stuffed);
+    destuffedOut.textContent = result.recovered;
+    bitStatus.textContent = result.isValid ? 'صحت بازیابی: درست' : 'صحت بازیابی: نادرست';
+  });
+}
+
+function setupCRC() {
+  const dataInput = document.getElementById('crcData');
+  const generatorInput = document.getElementById('crcGenerator');
+  const codewordInput = document.getElementById('codewordInput');
+  const calcBtn = document.getElementById('crcCalcBtn');
+  const injectBtn = document.getElementById('injectBtn');
+  const checkBtn = document.getElementById('crcCheckBtn');
+  const crcOut = document.getElementById('crcOut');
+  const checkOut = document.getElementById('crcCheckOut');
+  const crcError = document.getElementById('crcError');
+
+  const clearStatus = () => {
+    crcError.textContent = '';
+    checkOut.textContent = '---';
+    checkOut.className = 'result-value';
+  };
+
+  calcBtn.addEventListener('click', () => {
+    const data = dataInput.value.trim();
+    const generator = generatorInput.value.trim();
+
+    clearStatus();
+
+    const validation = validateCRCInput(data, generator);
+    if (!validation.valid) {
+      crcError.textContent = validation.error;
+      crcOut.textContent = '---';
+      codewordInput.value = '';
+      return;
+    }
+
+    const { crc, codeword } = createCodeword(data, generator);
+    crcOut.textContent = crc;
+    codewordInput.value = codeword;
+  });
+
+  injectBtn.addEventListener('click', () => {
+    const codeword = codewordInput.value.trim();
+
+    if (!codeword || !/^[01]+$/.test(codeword)) {
+      crcError.textContent = 'ابتدا یک Codeword معتبر تولید یا وارد کنید.';
+      return;
+    }
+
+    crcError.textContent = '';
+    codewordInput.value = corruptCodeword(codeword);
+    checkOut.textContent = '---';
+    checkOut.className = 'result-value';
+  });
+
+  checkBtn.addEventListener('click', () => {
+    const generator = generatorInput.value.trim();
+    const codeword = codewordInput.value.trim();
+
+    crcError.textContent = '';
+
+    if (!generator || !codeword) {
+      crcError.textContent = 'Generator و Codeword نباید خالی باشند.';
+      return;
+    }
+
+    if (!/^[01]+$/.test(generator) || !/^[01]+$/.test(codeword)) {
+      crcError.textContent = 'فقط 0 و 1 مجاز است.';
+      return;
+    }
+
+    if (generator.length < 2 || generator[0] !== '1') {
+      crcError.textContent = 'Generator باید با 1 شروع شود و حداقل 2 بیت باشد.';
+      return;
+    }
+
+    if (codeword.length < generator.length) {
+      crcError.textContent = 'طول Codeword باید از Generator بیشتر یا مساوی باشد.';
+      return;
+    }
+
+    const result = checkCodeword(codeword, generator);
+
+    if (result.hasError) {
+      checkOut.textContent = `خطا تشخیص داده شد | Remainder: ${result.finalRemainder}`;
+      checkOut.className = 'result-value error';
+    } else {
+      checkOut.textContent = `بدون خطا | Remainder: ${result.finalRemainder}`;
+      checkOut.className = 'result-value success';
+    }
+  });
+}
+
+function setupStopAndWait() {
+  const logBox = document.getElementById('arqLog');
+  const startBtn = document.getElementById('arqStartBtn');
+  const clearBtn = document.getElementById('arqClearBtn');
+
+  const log = (msg) => {
+    const p = document.createElement('p');
+    p.textContent = msg;
+    logBox.appendChild(p);
+    logBox.scrollTop = logBox.scrollHeight;
+  };
+
+  startBtn.addEventListener('click', async () => {
+    logBox.innerHTML = '';
+    const sim = new StopAndWaitSim(log);
+    await sim.run(4);
+  });
+
+  clearBtn.addEventListener('click', () => {
+    logBox.innerHTML = '';
+  });
+}
+
+setupBitStuffing();
+setupCRC();
+setupStopAndWait();
